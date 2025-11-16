@@ -1,0 +1,41 @@
+body {
+    font-family: Arial;
+    margin: 20px;
+    background-color:aquamarine;
+}
+
+.box {
+    width: 400px;
+    padding: 20px;
+    border: 1px solid #aaa;
+    margin-bottom: 20px;
+    border-radius: 5px;
+    background-color: #f2f2f2;
+}
+
+input {
+    width: 85%;
+    padding: 6px;
+    margin: 5px 0;
+}
+
+button {
+    padding: 8px 15px;
+    margin-top: 10px;
+    cursor: pointer;
+}
+
+.course-item {
+    display: flex;
+    justify-content: space-between;
+    background: #f2f2f2;
+    padding: 6px;
+    margin-top: 5px;
+    border-radius: 4px;
+}
+
+.success-box {
+    margin-top: 15px;
+    color: green;
+    font-weight: bold;
+}
