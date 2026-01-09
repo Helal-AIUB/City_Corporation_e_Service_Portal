@@ -114,27 +114,31 @@ class CitizenController {
 
     public function processTradeLicense2() { // Your renamed function
         if (session_status() === PHP_SESSION_NONE) session_start();
-        
         $userId = $_SESSION['user_id'];
-        $businessName = $_POST['business_name'];
-        $businessType = $_POST['business_type'];
-        $businessAddress = $_POST['business_address'];
-        $capital = $_POST['trade_capital'];
         
-        // Ensure these NEW payment variables are here
-        $paymentMethod = $_POST['payment_method'];
-        $trxId = $_POST['trx_id'];
-        $fee = 500.00; 
+        // Get Form Data
+        $bName = $_POST['business_name'];
+        $bType = $_POST['business_type'];
+        $bAddress = $_POST['business_address'];
+        $capital = $_POST['trade_capital'];
 
-        // Make sure your Model function accepts these extra arguments!
-        // If you didn't rename the model function, this line is fine:
-        if ($this->model->createTradeLicense($userId, $businessName, $businessType, $businessAddress, $capital, $paymentMethod, $trxId, $fee)) {
+        // Logic: Calculate Fee based on Capital (Example logic)
+        // If capital > 500,000 fee is 5000, else 2000
+        $fee = ($capital > 500000) ? 5000 : 2000; 
+
+        // Set Defaults for "Apply First, Pay Later"
+        $paymentStatus = 'Unpaid';
+        $payMethod = NULL;
+        $trxId = NULL;
+
+        // Save to DB (Status will be 'pending', Payment 'Unpaid')
+        if ($this->model->createTradeLicense($userId, $bName, $bType, $bAddress, $capital, $payMethod, $trxId, $fee, $paymentStatus)) {
              echo "<script>
-                    alert('Application & Payment Submitted Successfully!');
-                    window.location.href = 'index.php'; 
+                    alert('Application Submitted! A bill for $fee BDT has been generated. Please go to Pay Bills.');
+                    window.location.href = 'billing.php'; 
                   </script>";
         } else {
-            echo "<script>alert('Application Failed. Please try again.');</script>";
+            echo "<script>alert('Application Failed');</script>";
         }
     }
     // --- MY APPLICATIONS PAGE ---
@@ -148,6 +152,34 @@ class CitizenController {
         $tradeLicenses = $this->model->getMyTradeLicenses($userId);
         
         include '../views/applications.view.php';
+    }
+
+    // --- BILLING CONTROLLER LOGIC ---
+
+    public function showBillingPage() {
+        if (session_status() === PHP_SESSION_NONE) session_start();
+        $userId = $_SESSION['user_id'];
+        
+        // Fetch User (for sidebar image) and Unpaid Bills
+        $user = $this->model->getProfile($userId);
+        $bills = $this->model->getUnpaidBills($userId);
+        
+        include '../views/billing.view.php';
+    }
+
+    public function processBillPayment() {
+        $billId = $_POST['bill_id'];
+        $method = $_POST['payment_method'];
+        $trxId  = $_POST['trx_id'];
+
+        if ($this->model->payBill($billId, $method, $trxId)) {
+            echo "<script>
+                    alert('Payment Successful! The official will review it soon.');
+                    window.location.href = 'billing.php';
+                  </script>";
+        } else {
+            echo "<script>alert('Payment Failed. Try again.');</script>";
+        }
     }
 }
 ?>
