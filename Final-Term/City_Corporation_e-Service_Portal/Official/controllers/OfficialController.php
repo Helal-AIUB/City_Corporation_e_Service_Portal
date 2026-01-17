@@ -4,34 +4,45 @@ require_once '../models/OfficialModel.php';
 class OfficialController {
     private $model;
 
-    public function __construct($pdo) {
-        $this->model = new OfficialModel($pdo);
+    public function __construct($conn) {
+        $this->model = new OfficialModel($conn);
     }
 
     public function showDashboard() {
         if (session_status() === PHP_SESSION_NONE) session_start();
         
-        // Fetch data for the view
+        // 1. Fetch Stats
         $stats = $this->model->getStats();
-        $applications = $this->model->getAllApplications();
         
+        // 2. Fetch Trade Licenses
+        $applications = $this->model->getAllTradeLicenses();
+
+        // 3. Fetch NID Applications (Crucial for the view to work)
+        $nidApplications = $this->model->getAllNidApplications();
+        
+        // 4. Load the View
         include '../views/dashboard.view.php';
     }
 
-    public function handleStatusUpdate() {
+    public function handleRequest() {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $appId = $_POST['application_id'];
-            $action = $_POST['action']; // 'approve' or 'reject'
+            
+            // Handle Trade License Updates
+            if (isset($_POST['update_status'])) {
+                $id = $_POST['application_id'];
+                $status = $_POST['status'];
+                $this->model->updateTradeLicenseStatus($id, $status);
+                header("Location: index.php");
+                exit();
+            }
 
-            $status = ($action === 'approve') ? 'approved' : 'rejected';
-
-            if ($this->model->updateApplicationStatus($appId, $status)) {
-                echo "<script>
-                        alert('Application " . ucfirst($status) . " Successfully!');
-                        window.location.href = 'index.php';
-                      </script>";
-            } else {
-                echo "<script>alert('Error updating status'); window.location.href = 'index.php';</script>";
+            // Handle NID Updates
+            if (isset($_POST['update_nid_status'])) {
+                $id = $_POST['nid_id'];
+                $status = $_POST['status'];
+                $this->model->updateNidStatus($id, $status);
+                header("Location: index.php");
+                exit();
             }
         }
     }

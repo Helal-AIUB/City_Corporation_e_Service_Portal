@@ -1,22 +1,24 @@
 <?php
+// File: Official/public/index.php
 session_start();
 
-// 1. Security: Only 'official' role allowed
-// (Make sure your user in database has role='official')
+// 1. Security Check
 if (!isset($_SESSION['user_role']) || $_SESSION['user_role'] !== 'official') {
+    // If not logged in as official, redirect to Home
     header("Location: ../../Home/public/index.php");
     exit();
 }
 
-require_once '../config/db.php';
+// 2. Load Database & Controller
+// This loads the file you just fixed in Step 1
+require_once '../config/db.php'; 
 require_once '../controllers/OfficialController.php';
 
-$controller = new OfficialController($pdo);
+// 3. Initialize Controller
+// Now $conn will exist!
+$controller = new OfficialController($conn);
 
-// 2. Route Requests
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
-    $controller->handleStatusUpdate();
-} else {
-    $controller->showDashboard();
-}
+// 4. Handle Requests
+$controller->handleRequest();
+$controller->showDashboard();
 ?>

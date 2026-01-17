@@ -51,7 +51,8 @@
                         <div class="icon-box blue"><i class="fa fa-id-card"></i></div>
                         <h3>NID Correction</h3>
                         <p>Apply for NID updates or corrections.</p>
-                        <button class="btn-apply">Apply Now</button>
+
+                        <a href="nid_correction.php" class="btn-apply" style="text-decoration: none; display: block; text-align: center;">Apply Now</a>
                     </div>
                     <div class="service-card">
                         <div class="icon-box green"><i class="fa fa-tint"></i></div>

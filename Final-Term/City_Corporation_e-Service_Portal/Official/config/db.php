@@ -1,13 +1,16 @@
 <?php
-$host = "localhost";
-$user = "root";
-$pass = "";
-$dbname = "City_Corporation_e-Service_Portal"; // Make sure this matches your database name
+// File: Official/config/db.php
 
-try {
-    $pdo = new PDO("mysql:host=$host;dbname=$dbname", $user, $pass);
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-} catch (PDOException $e) {
-    die("Connection Error: " . $e->getMessage());
+$servername = "localhost";
+$username = "root";
+$password = "";
+$dbname = "City_Corporation_e-Service_Portal"; // Make sure this matches your actual database name
+
+// Create connection using MySQLi
+$conn = new mysqli($servername, $username, $password, $dbname);
+
+// Check connection
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
 }
 ?>

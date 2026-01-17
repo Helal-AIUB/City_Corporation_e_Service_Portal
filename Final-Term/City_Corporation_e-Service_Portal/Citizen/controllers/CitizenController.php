@@ -1,34 +1,32 @@
 <?php
+// File: controllers/CitizenController.php
 require_once '../models/CitizenModel.php';
 
 class CitizenController {
     private $model;
 
-    public function __construct($pdo) {
-        $this->model = new CitizenModel($pdo);
+    public function __construct($conn) {
+        $this->model = new CitizenModel($conn);
     }
 
-    // 1. Load the Dashboard View with User Data
+    // =========================================================
+    // 1. DASHBOARD & PROFILE
+    // =========================================================
+
     public function showDashboard() {
         if (session_status() === PHP_SESSION_NONE) session_start();
-        
         $userId = $_SESSION['user_id'];
-        $user = $this->model->getProfile($userId); // Fetch current data
-        
-        // Pass data to the view
+        $user = $this->model->getProfile($userId);
         include '../views/dashboard.view.php';
     }
 
     public function showProfilePage() {
         if (session_status() === PHP_SESSION_NONE) session_start();
-        
         $userId = $_SESSION['user_id'];
-        $user = $this->model->getProfile($userId); // Reusing your existing model method
-        
+        $user = $this->model->getProfile($userId); 
         include '../views/profile.view.php';
     }
 
-    // 2. Handle Profile Updates (POST request)
     public function updateProfile() {
         if (session_status() === PHP_SESSION_NONE) session_start();
         
@@ -38,63 +36,44 @@ class CitizenController {
             $phone = $_POST['phone'];
             $address = $_POST['address'];
             
-            // Handle File Upload (Profile Picture)
             $profilePic = null;
             if (!empty($_FILES['profile_pic']['name'])) {
                 $targetDir = "../public/uploads/";
-                
-                // Create folder if it doesn't exist
                 if (!is_dir($targetDir)) mkdir($targetDir, 0777, true);
-
                 $fileName = time() . "_" . basename($_FILES["profile_pic"]["name"]);
                 $targetFilePath = $targetDir . $fileName;
-                
                 if (move_uploaded_file($_FILES["profile_pic"]["tmp_name"], $targetFilePath)) {
                     $profilePic = $fileName;
                 }
             }
 
-            // Save to Database
             if ($this->model->updateInfo($userId, $nid, $phone, $address, $profilePic)) {
-                echo "<script>
-                        alert('Profile Updated Successfully!');
-                        window.location.href = 'index.php';
-                      </script>";
+                echo "<script>alert('Profile Updated Successfully!'); window.location.href = 'index.php';</script>";
             } else {
                 echo "<script>alert('Update Failed');</script>";
             }
         }
     }
 
+    // =========================================================
+    // 2. TRADE LICENSE
+    // =========================================================
 
-    // --- TRADE LICENSE FUNCTIONS ---
-
-   public function showTradeLicenseForm() {
+    public function showTradeLicenseForm() {
         if (session_status() === PHP_SESSION_NONE) session_start();
         $userId = $_SESSION['user_id'];
-        
-        // 1. Fetch current user data
         $user = $this->model->getProfile($userId);
         
-        // 2. CHECK: Is the profile complete?
-        // We check if NID, Phone, or Address are empty or null
         if (empty($user['nid']) || empty($user['phone']) || empty($user['address'])) {
-            
-            // 3. If incomplete: Show Alert & Redirect to Profile Page
-            echo "<script>
-                    alert('⚠️ Action Required! \\n\\nYou must complete your Profile Information (NID, Phone Number, and Address) before applying for a Trade License.');
-                    window.location.href = 'profile.php';
-                  </script>";
-            exit(); // Stop the script here
+            echo "<script>alert('⚠️ Please complete your profile first!'); window.location.href = 'profile.php';</script>";
+            exit(); 
         }
-
-        // 4. If complete: Show the Application Form
         include '../views/trade_license.view.php';
     }
 
-    public function processTradeLicense() {
+    // UPDATED: No longer takes payment info. Just saves and redirects to BILLING.
+    public function processTradeLicense() { 
         if (session_status() === PHP_SESSION_NONE) session_start();
-        
         $userId = $_SESSION['user_id'];
         $businessName = $_POST['business_name'];
         $businessType = $_POST['business_type'];
@@ -103,51 +82,87 @@ class CitizenController {
 
         if ($this->model->createTradeLicense($userId, $businessName, $businessType, $businessAddress, $capital)) {
              echo "<script>
-                    alert('Application Submitted Successfully!');
-                    window.location.href = 'index.php'; // Redirect to dashboard
-                  </script>";
+                    alert('Application Submitted! Please pay the fee from the Billing section.'); 
+                    window.location.href = 'billing.php'; 
+                   </script>";
         } else {
-            echo "<script>alert('Application Failed. Please try again.');</script>";
+            echo "<script>alert('Application Failed.');</script>";
         }
     }
-    // Inside CitizenController.php
 
-    public function processTradeLicense2() { // Your renamed function
-        if (session_status() === PHP_SESSION_NONE) session_start();
-        
-        $userId = $_SESSION['user_id'];
-        $businessName = $_POST['business_name'];
-        $businessType = $_POST['business_type'];
-        $businessAddress = $_POST['business_address'];
-        $capital = $_POST['trade_capital'];
-        
-        // Ensure these NEW payment variables are here
-        $paymentMethod = $_POST['payment_method'];
-        $trxId = $_POST['trx_id'];
-        $fee = 500.00; 
-
-        // Make sure your Model function accepts these extra arguments!
-        // If you didn't rename the model function, this line is fine:
-        if ($this->model->createTradeLicense($userId, $businessName, $businessType, $businessAddress, $capital, $paymentMethod, $trxId, $fee)) {
-             echo "<script>
-                    alert('Application & Payment Submitted Successfully!');
-                    window.location.href = 'index.php'; 
-                  </script>";
-        } else {
-            echo "<script>alert('Application Failed. Please try again.');</script>";
-        }
-    }
-    // --- MY APPLICATIONS PAGE ---
     public function showMyApplications() {
         if (session_status() === PHP_SESSION_NONE) session_start();
         $userId = $_SESSION['user_id'];
-
-        $user = $this->model->getProfile($userId); //set user profile pic
-        
-        // Fetch all applications for this user
+        $user = $this->model->getProfile($userId); 
         $tradeLicenses = $this->model->getMyTradeLicenses($userId);
-        
+        $nidApplications = $this->model->getMyNidApplications($userId);
         include '../views/applications.view.php';
+    }
+
+    // =========================================================
+    // 3. NID CORRECTION
+    // =========================================================
+
+    public function showNIDForm() {
+        if (session_status() === PHP_SESSION_NONE) session_start();
+        $userId = $_SESSION['user_id'];
+        $user = $this->model->getProfile($userId);
+        include '../views/nid_correction.view.php'; 
+    }
+
+    public function processNIDCorrection() {
+        if (session_status() === PHP_SESSION_NONE) session_start();
+        
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $userId = $_SESSION['user_id'];
+            $currentNid = $_POST['current_nid'];
+            $correctionType = $_POST['correction_type'];
+            $details = $_POST['details'];
+
+            if ($this->model->createNidCorrection($userId, $currentNid, $correctionType, $details)) {
+                echo "<script>
+                        alert('Application Submitted! Please pay the fee.');
+                        window.location.href = 'billing.php'; 
+                      </script>";
+            } else {
+                echo "<script>alert('Application Failed.'); window.history.back();</script>";
+            }
+        }
+    }
+
+    // =========================================================
+    // 4. BILLING CONTROLLER (NEW)
+    // =========================================================
+
+    public function showBillingPage() {
+        if (session_status() === PHP_SESSION_NONE) session_start();
+        $userId = $_SESSION['user_id'];
+        $user = $this->model->getProfile($userId);
+        
+        // Fetch all unpaid bills
+        $unpaidBills = $this->model->getUnpaidBills($userId);
+        
+        include '../views/billing.view.php';
+    }
+
+    public function processBillPayment() {
+        if (session_status() === PHP_SESSION_NONE) session_start();
+        
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $serviceType = $_POST['service_type'];
+            $billId = $_POST['bill_id'];
+            $paymentMethod = $_POST['payment_method'];
+            $trxId = $_POST['trx_id'];
+
+            if ($this->model->processPayment($serviceType, $billId, $paymentMethod, $trxId)) {
+                 echo "<script>
+                        alert('Payment Successful! The authorities will review your application.');
+                        window.location.href = 'applications.php';
+                       </script>";
+            } else {
+                 echo "<script>alert('Payment Failed. Please try again.'); window.history.back();</script>";
+            }
+        }
     }
 }
 ?>

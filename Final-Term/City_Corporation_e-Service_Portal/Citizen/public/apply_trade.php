@@ -9,12 +9,12 @@ if (!isset($_SESSION['user_role']) || $_SESSION['user_role'] !== 'citizen') {
 require_once '../config/db.php';
 require_once '../controllers/CitizenController.php';
 
-$controller = new CitizenController($pdo);
+$controller = new CitizenController($conn);
 
 // Handle Form Submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_application'])) {
-    // UPDATE THIS LINE: Call your new function name "2"
-    $controller->processTradeLicense2(); 
+    // UPDATED: Removed the "2"
+    $controller->processTradeLicense(); 
 } else {
     $controller->showTradeLicenseForm();
 }

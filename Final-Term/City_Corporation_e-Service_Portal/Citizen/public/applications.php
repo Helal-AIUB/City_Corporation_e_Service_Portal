@@ -10,7 +10,8 @@ if (!isset($_SESSION['user_role']) || $_SESSION['user_role'] !== 'citizen') {
 require_once '../config/db.php';
 require_once '../controllers/CitizenController.php';
 
-$controller = new CitizenController($pdo);
+// CRITICAL FIX: Changed $pdo to $conn (MySQLi)
+$controller = new CitizenController($conn);
 
 // Call the new function to show the list
 $controller->showMyApplications();
