@@ -168,6 +168,55 @@
                 <?php endif; ?>
             </div>
 
+            <div class="table-container">
+                <h3 class="section-title">Water Connection History</h3>
+                <?php if (empty($waterApplications)): ?>
+                    <p style="color:#777; padding: 10px;">No water connection requests found.</p>
+                <?php else: ?>
+                    <table class="app-table">
+                        <thead>
+                            <tr>
+                                <th>Location</th>
+                                <th>Connection Type</th>
+                                <th>Applied Date</th>
+                                <th>Payment</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($waterApplications as $water): ?>
+                                <tr>
+                                    <td>
+                                        <strong><?php echo htmlspecialchars($water['holding_no']); ?></strong>
+                                        <br><span style="font-size:12px; color:#777;"><?php echo htmlspecialchars($water['zone']); ?></span>
+                                    </td>
+                                    <td>
+                                        <i class="fa fa-tint" style="color:#3498db; margin-right:5px;"></i>
+                                        <?php echo htmlspecialchars($water['connection_type']); ?>
+                                        <br><span style="font-size:11px; color:#555;">Pipe: <?php echo htmlspecialchars($water['pipe_size']); ?></span>
+                                    </td>
+                                    <td><?php echo date('d M Y', strtotime($water['applied_at'])); ?></td>
+                                    <td>
+                                        <?php if($water['payment_status'] == 'Paid'): ?>
+                                            <span class="pay-success">Paid</span>
+                                            <span class="trx-info">Trx: <?php echo $water['trx_id']; ?></span>
+                                        <?php else: ?>
+                                            <span class="pay-pending">Unpaid</span>
+                                            <span class="trx-info">Fee: <?php echo $water['fee_amount']; ?></span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td>
+                                        <span class="status-badge status-<?php echo strtolower($water['status']); ?>">
+                                            <?php echo ucfirst($water['status']); ?>
+                                        </span>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                <?php endif; ?>
+            </div>
+
         </main>
     </div>
 </body>

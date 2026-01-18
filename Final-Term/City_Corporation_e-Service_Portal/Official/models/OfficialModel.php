@@ -9,22 +9,25 @@ class OfficialModel {
     public function getStats() {
         $stats = [];
         
-        // Total Applications (Trade + NID)
+        // 1. Total Applications (Trade + NID + Water)
         $result = $this->db->query("SELECT 
             (SELECT COUNT(*) FROM trade_licenses) + 
-            (SELECT COUNT(*) FROM nid_corrections) as total");
+            (SELECT COUNT(*) FROM nid_corrections) + 
+            (SELECT COUNT(*) FROM water_connections) as total");
         $stats['total_applications'] = $result->fetch_assoc()['total'] ?? 0;
 
-        // Pending Requests
+        // 2. Pending Requests
         $result = $this->db->query("SELECT 
             (SELECT COUNT(*) FROM trade_licenses WHERE status='pending') + 
-            (SELECT COUNT(*) FROM nid_corrections WHERE status='pending') as pending");
+            (SELECT COUNT(*) FROM nid_corrections WHERE status='pending') + 
+            (SELECT COUNT(*) FROM water_connections WHERE status='pending') as pending");
         $stats['pending_requests'] = $result->fetch_assoc()['pending'] ?? 0;
 
-        // Approved Licenses
+        // 3. Approved (All Types)
         $result = $this->db->query("SELECT 
             (SELECT COUNT(*) FROM trade_licenses WHERE status='approved') + 
-            (SELECT COUNT(*) FROM nid_corrections WHERE status='approved') as approved");
+            (SELECT COUNT(*) FROM nid_corrections WHERE status='approved') + 
+            (SELECT COUNT(*) FROM water_connections WHERE status='approved') as approved");
         $stats['approved_licenses'] = $result->fetch_assoc()['approved'] ?? 0;
 
         return $stats;
@@ -61,6 +64,24 @@ class OfficialModel {
 
     public function updateNidStatus($id, $status) {
         $sql = "UPDATE nid_corrections SET status = ? WHERE id = ?";
+        $stmt = $this->db->prepare($sql);
+        $stmt->bind_param("si", $status, $id);
+        return $stmt->execute();
+    }
+
+    // --- WATER CONNECTION FUNCTIONS ---
+    public function getAllWaterConnections() {
+        // Join with 'users' table to get the Name and NID of the applicant
+        $sql = "SELECT w.*, u.name as applicant_name, u.nid as applicant_nid 
+                FROM water_connections w 
+                JOIN users u ON w.user_id = u.id 
+                ORDER BY w.applied_at DESC";
+        $result = $this->db->query($sql);
+        return $result->fetch_all(MYSQLI_ASSOC);
+    }
+
+    public function updateWaterStatus($id, $status) {
+        $sql = "UPDATE water_connections SET status = ? WHERE id = ?";
         $stmt = $this->db->prepare($sql);
         $stmt->bind_param("si", $status, $id);
         return $stmt->execute();

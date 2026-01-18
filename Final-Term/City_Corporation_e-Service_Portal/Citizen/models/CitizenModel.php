@@ -88,31 +88,29 @@ class CitizenModel {
     public function getUnpaidBills($userId) {
         $bills = [];
 
-        // 1. Get Unpaid Trade Licenses
-        $sql1 = "SELECT id, 'Trade License' as service_type, fee_amount, applied_at 
-                 FROM trade_licenses 
-                 WHERE user_id = ? AND payment_status = 'Unpaid'";
+        // 1. Trade License
+        $sql1 = "SELECT id, 'Trade License' as service_type, fee_amount, applied_at FROM trade_licenses WHERE user_id = ? AND payment_status = 'Unpaid'";
         $stmt1 = $this->db->prepare($sql1);
         $stmt1->bind_param("i", $userId);
         $stmt1->execute();
         $result1 = $stmt1->get_result();
-        while ($row = $result1->fetch_assoc()) {
-            $bills[] = $row;
-        }
+        while ($row = $result1->fetch_assoc()) { $bills[] = $row; }
 
-        // 2. Get Unpaid NID Corrections (FIXED: Changed 'created_at' to 'applied_at')
-        // Before: created_at as applied_at (ERROR)
-        // Now:    applied_at (CORRECT)
-        $sql2 = "SELECT id, 'NID Correction' as service_type, fee_amount, applied_at 
-                 FROM nid_corrections 
-                 WHERE user_id = ? AND payment_status = 'Unpaid'";
+        // 2. NID Correction
+        $sql2 = "SELECT id, 'NID Correction' as service_type, fee_amount, applied_at FROM nid_corrections WHERE user_id = ? AND payment_status = 'Unpaid'";
         $stmt2 = $this->db->prepare($sql2);
         $stmt2->bind_param("i", $userId);
         $stmt2->execute();
         $result2 = $stmt2->get_result();
-        while ($row = $result2->fetch_assoc()) {
-            $bills[] = $row;
-        }
+        while ($row = $result2->fetch_assoc()) { $bills[] = $row; }
+
+        // 3. Water Connection (NEW)
+        $sql3 = "SELECT id, 'Water Connection' as service_type, fee_amount, applied_at FROM water_connections WHERE user_id = ? AND payment_status = 'Unpaid'";
+        $stmt3 = $this->db->prepare($sql3);
+        $stmt3->bind_param("i", $userId);
+        $stmt3->execute();
+        $result3 = $stmt3->get_result();
+        while ($row = $result3->fetch_assoc()) { $bills[] = $row; }
 
         return $bills;
     }
@@ -122,6 +120,8 @@ class CitizenModel {
             $sql = "UPDATE trade_licenses SET payment_status='Paid', payment_method=?, trx_id=? WHERE id=?";
         } elseif ($serviceType === 'NID Correction') {
             $sql = "UPDATE nid_corrections SET payment_status='Paid', payment_method=?, trx_id=? WHERE id=?";
+        } elseif ($serviceType === 'Water Connection') { // NEW
+            $sql = "UPDATE water_connections SET payment_status='Paid', payment_method=?, trx_id=? WHERE id=?";
         } else {
             return false;
         }
@@ -129,6 +129,28 @@ class CitizenModel {
         $stmt = $this->db->prepare($sql);
         $stmt->bind_param("ssi", $method, $trxId, $id);
         return $stmt->execute();
+    }
+
+    // --- WATER CONNECTION ---
+    public function createWaterConnection($userId, $type, $holding, $zone, $pipe, $address, $fee) {
+        $sql = "INSERT INTO water_connections 
+                (user_id, connection_type, holding_no, zone, pipe_size, address, fee_amount, payment_status, status) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, 'Unpaid', 'pending')";
+        
+        $stmt = $this->db->prepare($sql);
+        // "isssssd" -> int, string, string, string, string, string, decimal
+        $stmt->bind_param("isssssd", $userId, $type, $holding, $zone, $pipe, $address, $fee);
+        return $stmt->execute();
+    }
+
+    // --- WATER CONNECTION HISTORY ---
+    public function getAllWaterApplications($userId) {
+        $sql = "SELECT * FROM water_connections WHERE user_id = ? ORDER BY applied_at DESC";
+        $stmt = $this->db->prepare($sql);
+        $stmt->bind_param("i", $userId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        return $result->fetch_all(MYSQLI_ASSOC);
     }
 }
 ?>

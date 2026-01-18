@@ -96,6 +96,8 @@ class CitizenController {
         $user = $this->model->getProfile($userId); 
         $tradeLicenses = $this->model->getMyTradeLicenses($userId);
         $nidApplications = $this->model->getMyNidApplications($userId);
+        // --- NEW LINE: Fetch Water Apps ---
+        $waterApplications = $this->model->getAllWaterApplications($userId);
         include '../views/applications.view.php';
     }
 
@@ -161,6 +163,41 @@ class CitizenController {
                        </script>";
             } else {
                  echo "<script>alert('Payment Failed. Please try again.'); window.history.back();</script>";
+            }
+        }
+    }
+
+    // --- WATER CONNECTION CONTROLLER ---
+
+    public function showWaterForm() {
+        if (session_status() === PHP_SESSION_NONE) session_start();
+        $userId = $_SESSION['user_id'];
+        $user = $this->model->getProfile($userId);
+        include '../views/water_connection.view.php';
+    }
+
+    public function processWaterApplication() {
+        if (session_status() === PHP_SESSION_NONE) session_start();
+        
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $userId = $_SESSION['user_id'];
+            
+            $type = $_POST['connection_type'];
+            $holding = $_POST['holding_no'];
+            $zone = $_POST['zone'];
+            $pipe = $_POST['pipe_size'];
+            $address = $_POST['address'];
+
+            // LOGIC: Set Fee based on Type
+            $fee = ($type === 'Commercial') ? 5000.00 : 2000.00;
+
+            if ($this->model->createWaterConnection($userId, $type, $holding, $zone, $pipe, $address, $fee)) {
+                 echo "<script>
+                        alert('Water Connection Application Submitted! Fee: " . $fee . " BDT. Please pay in Billing.');
+                        window.location.href = 'billing.php'; 
+                       </script>";
+            } else {
+                echo "<script>alert('Application Failed.'); window.history.back();</script>";
             }
         }
     }

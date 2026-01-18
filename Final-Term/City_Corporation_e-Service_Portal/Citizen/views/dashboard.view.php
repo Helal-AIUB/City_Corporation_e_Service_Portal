@@ -52,13 +52,16 @@
                         <h3>NID Correction</h3>
                         <p>Apply for NID updates or corrections.</p>
 
-                        <a href="nid_correction.php" class="btn-apply" style="text-decoration: none; display: block; text-align: center;">Apply Now</a>
+                        <a href="nid_correction.php" class="btn-apply"
+                            style="text-decoration: none; display: block; text-align: center;">Apply Now</a>
                     </div>
                     <div class="service-card">
                         <div class="icon-box green"><i class="fa fa-tint"></i></div>
                         <h3>New Water Connection</h3>
                         <p>Request a new water line for your home.</p>
-                        <button class="btn-apply">Apply Now</button>
+
+                        <a href="apply_water.php" class="btn-apply"
+                            style="text-decoration: none; display: block; text-align: center;">Apply Now</a>
                     </div>
                     <div class="service-card">
                         <div class="icon-box orange"><i class="fa fa-file-contract"></i></div>

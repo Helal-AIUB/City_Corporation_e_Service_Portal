@@ -9,19 +9,18 @@ class OfficialController {
     }
 
     public function showDashboard() {
-        if (session_status() === PHP_SESSION_NONE) session_start();
-        
-        // 1. Fetch Stats
+        // 1. Get Stats
         $stats = $this->model->getStats();
         
-        // 2. Fetch Trade Licenses
+        // 2. Get All Lists
         $applications = $this->model->getAllTradeLicenses();
-
-        // 3. Fetch NID Applications (Crucial for the view to work)
         $nidApplications = $this->model->getAllNidApplications();
         
-        // 4. Load the View
-        include '../views/dashboard.view.php';
+        // --- NEW LINE: Get Water Connections ---
+        $waterApplications = $this->model->getAllWaterConnections(); 
+
+        // 3. Load View
+        require_once '../views/dashboard.view.php';
     }
 
     public function handleRequest() {
@@ -44,6 +43,19 @@ class OfficialController {
                 header("Location: index.php");
                 exit();
             }
+
+            if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_water_status'])) {
+            $id = $_POST['water_id'];
+            $status = $_POST['update_water_status']; // 'approved' or 'rejected'
+            
+            if ($this->model->updateWaterStatus($id, $status)) {
+                // Refresh page to show changes
+                header("Location: index.php");
+                exit();
+            } else {
+                echo "Error updating status.";
+            }
+        }
         }
     }
 }

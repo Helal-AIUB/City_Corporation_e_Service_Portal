@@ -277,6 +277,85 @@
                     </tbody>
                 </table>
             </div>
+        
+            <div class="table-section">
+                <h3>Manage Water Connections</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th width="20%">Applicant</th>
+                            <th width="25%">Location & Zone</th>
+                            <th width="20%">Connection Details</th>
+                            <th width="15%">Payment</th>
+                            <th width="10%">Status</th>
+                            <th width="10%">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php if (empty($waterApplications)): ?>
+                            <tr><td colspan="6" style="text-align:center; padding: 30px;">No water connection requests found.</td></tr>
+                        <?php else: ?>
+                            <?php foreach ($waterApplications as $water): ?>
+                            <tr>
+                                <td>
+                                    <strong><?php echo htmlspecialchars($water['applicant_name']); ?></strong>
+                                    <span class="text-muted">NID: <?php echo htmlspecialchars($water['applicant_nid']); ?></span>
+                                </td>
+                                <td>
+                                    <strong><?php echo htmlspecialchars($water['holding_no']); ?></strong>
+                                    <span class="text-muted"><?php echo htmlspecialchars($water['zone']); ?></span>
+                                    <span class="text-muted" style="font-size:11px;"><?php echo substr(htmlspecialchars($water['address']), 0, 30); ?>...</span>
+                                </td>
+                                <td>
+                                    <strong><?php echo htmlspecialchars($water['connection_type']); ?></strong>
+                                    <span class="text-muted">Pipe: <?php echo htmlspecialchars($water['pipe_size']); ?></span>
+                                </td>
+                                <td>
+                                    <?php if($water['payment_status'] == 'Paid'): ?>
+                                        <span class="badge success">Paid</span><br>
+                                        <span class="trx-id"><?php echo $water['trx_id']; ?></span>
+                                    <?php else: ?>
+                                        <span class="badge danger">Unpaid</span>
+                                        <br><small><?php echo $water['fee_amount']; ?> BDT</small>
+                                    <?php endif; ?>
+                                </td>
+                                <td>
+                                    <span class="status-<?php echo strtolower($water['status']); ?>">
+                                        <?php if($water['status'] == 'approved') echo '<i class="fa fa-check-circle"></i>'; ?>
+                                        <?php if($water['status'] == 'pending') echo '<i class="fa fa-clock"></i>'; ?>
+                                        <?php if($water['status'] == 'rejected') echo '<i class="fa fa-times-circle"></i>'; ?>
+                                        <?php echo ucfirst($water['status']); ?>
+                                    </span>
+                                </td>
+                                <td>
+                                    <?php if($water['status'] == 'pending'): ?>
+                                        <form action="index.php" method="POST">
+                                            <input type="hidden" name="water_id" value="<?php echo $water['id']; ?>">
+                                            
+                                            <?php if($water['payment_status'] == 'Paid'): ?>
+                                                <button type="submit" name="update_water_status" value="approved" class="btn-action btn-approve" title="Approve">
+                                                    <i class="fa fa-check"></i>
+                                                </button>
+                                            <?php else: ?>
+                                                <button type="button" class="btn-action btn-disabled" title="Cannot Approve Unpaid" disabled>
+                                                    <i class="fa fa-ban"></i>
+                                                </button>
+                                            <?php endif; ?>
+
+                                            <button type="submit" name="update_water_status" value="rejected" class="btn-action btn-reject" title="Reject">
+                                                <i class="fa fa-times"></i>
+                                            </button>
+                                        </form>
+                                    <?php else: ?>
+                                        <span style="color:#bdc3c7;">—</span>
+                                    <?php endif; ?>
+                                </td>
+                            </tr>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+            </div>
 
         </main>
     </div>
