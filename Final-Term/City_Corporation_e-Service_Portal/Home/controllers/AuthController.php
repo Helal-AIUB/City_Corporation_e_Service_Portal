@@ -17,6 +17,12 @@ class AuthController {
             if (isset($_POST['signin'])) {
                 $this->processSignin();
             }
+            if (isset($_POST['forgot_password'])) {
+                $this->processForgotPassword();
+            }
+            if (isset($_POST['reset_password'])) {
+                $this->processResetPassword();
+            }
         }
     }
 
@@ -133,6 +139,66 @@ private function processSignin() {
             exit(); 
         } else {
             echo "<script>alert('Invalid Email or Password');</script>";
+        }
+    }
+
+    private function processForgotPassword() {
+        $email = $_POST["email"];
+        if (empty($email)) {
+            echo "<script>alert('Please enter your email.');</script>";
+            return;
+        }
+
+        $user = $this->userModel->findByEmail($email);
+        if ($user) {
+            $token = bin2hex(random_bytes(16));
+            $token_hash = hash("sha256", $token);
+            $expiry = date("Y-m-d H:i:s", time() + 60 * 30); // 30 mins validity
+
+            if ($this->userModel->saveResetToken($email, $token_hash, $expiry)) {
+                // Construct the reset link
+                // Assuming this is running on localhost/WT_Fall25-26/...
+                $path = dirname($_SERVER['PHP_SELF']); 
+                $resetLink = "http://" . $_SERVER['HTTP_HOST'] . $path . "/reset_password.php?token=" . $token;
+                
+                // SIMULATION: In a real app, use mail() or PHPMailer here.
+                echo "<script>
+                    alert('Password reset link (Simulated): " . $resetLink . "');
+                    window.location.href = 'index.php';
+                </script>";
+            }
+        } else {
+            echo "<script>alert('Email not found.');</script>";
+        }
+    }
+
+    private function processResetPassword() {
+        $token = $_POST["token"];
+        $password = $_POST["password"];
+        $confirm = $_POST["confirm_password"];
+
+        if ($password !== $confirm) {
+            echo "<script>alert('Passwords do not match.');</script>";
+            return;
+        }
+
+        $token_hash = hash("sha256", $token);
+        $user = $this->userModel->getUserByToken($token_hash);
+
+        if ($user) {
+            if (strtotime($user['reset_token_expires_at']) <= time()) {
+                echo "<script>alert('Token has expired.');</script>";
+                return;
+            }
+
+            if ($this->userModel->updatePassword($user['id'], $password)) {
+                echo "<script>
+                    alert('Password updated successfully. Please login.');
+                    window.location.href = 'index.php';
+                </script>";
+            }
+        } else {
+            echo "<script>alert('Invalid or expired token.');</script>";
         }
     }
 

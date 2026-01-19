@@ -49,7 +49,8 @@
                 <span>or use your email password</span>
                 <input type="email" name="signin_email" placeholder="Email" required />
                 <input type="password" name="signin_password" placeholder="Password" required />
-                <a href="#">Forget Your Password?</a>
+                <a href="forgot_password.php">Forgot Password?</a>
+
                 <button type="submit" name="signin">Sign In</button>
             </form>
         </div>
